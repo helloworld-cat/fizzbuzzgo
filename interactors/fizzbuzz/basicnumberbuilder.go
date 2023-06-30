@@ -6,7 +6,7 @@ type (
 	basicNumberBuilder struct{}
 )
 
-// NewBasicNumberBuilder prepare NumberBuilder with basic implementation.
+// NewBasicNumberBuilder prepares NumberBuilder with basic implementation.
 func NewBasicNumberBuilder() NumberBuilder {
 	return &basicNumberBuilder{}
 }
