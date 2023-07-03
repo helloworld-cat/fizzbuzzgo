@@ -68,6 +68,9 @@ HTTP/1.1 200 OK
 
 - `POST /stats`
 
+Warning: stats are reset to zero when server is stopped.
+TODO: use redis (or another persistance technology).
+
 #### HTTP Request
 
 ```
