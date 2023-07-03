@@ -29,16 +29,15 @@ $ go test ./...
 
 - `POST /numbers`
 
-####  HTTP Request
+#### HTTP Request
 
 ```
 $ curl -i -X POST -d '{"number_a": 7, "number_b": 9, "word_a": "Fizz", "word_b": "Buzz", "limit": 100}' "http://localhost:8080/numbers"
 
 @limit: optional
-@word_a: optional
-@word_b: optional
+@word_a: optional, warning: it is case sensitive
+@word_b: optional, warning: it is case sensitive
 ```
-
 
 #### Response
 
@@ -63,6 +62,29 @@ HTTP/1.1 200 OK
   // ...
   100
 ]%
+```
+
+### Fetch stats
+
+- `POST /stats`
+
+#### HTTP Request
+
+```
+$ curl -i -X POST -d '{"number_a": 7, "number_b": 9, "word_a": "Fizz", "word_b": "Buzz"}' "http://localhost:8080/stats"
+
+@word_a: optional, warning: it is case sensitive
+@word_b: optional, warning: it is case sensitive
+```
+
+#### Response
+
+```
+HTTP/1.1 200 OK
+{
+  // ... parameters sent
+  "stats": 1 // number of calls about parameters
+}%
 ```
 
 ### More documentation ?

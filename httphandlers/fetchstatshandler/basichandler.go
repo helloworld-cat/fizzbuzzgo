@@ -1,4 +1,4 @@
-package listnumbershandler
+package fetchstatshandler
 
 import (
 	"encoding/json"
@@ -6,28 +6,22 @@ import (
 	"net/http"
 
 	"github.com/helloworld-cat/fizzbuzzgo/entities"
-	"github.com/helloworld-cat/fizzbuzzgo/interactors/fizzbuzz"
 	"github.com/helloworld-cat/fizzbuzzgo/repositories/statsrepository"
 )
 
-func NewBasic(ng fizzbuzz.NumbersGenerator, statsRepo statsrepository.StatsRepository) http.Handler {
-	return &basicHandler{
-		maxLimit:         200,
-		numbersGenerator: ng,
-		statsRepo:        statsRepo,
-	}
-}
-
 type (
 	basicHandler struct {
-		maxLimit         int
-		numbersGenerator fizzbuzz.NumbersGenerator
-		statsRepo        statsrepository.StatsRepository
+		statsRepo statsrepository.StatsRepository
 	}
 )
 
+func NewBasicHandler(statsRepo statsrepository.StatsRepository) http.Handler {
+	return &basicHandler{
+		statsRepo: statsRepo,
+	}
+}
+
 func (h *basicHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// Process user request
 	userReq, err := entities.NewUserRequest(rw, req)
 	if err != nil {
 		h.writeJSONResponse(rw, err, http.StatusBadRequest)
@@ -35,27 +29,13 @@ func (h *basicHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Validate and prepare inputs
-	inputs, errs := userReq.ValidateAndNormalizeInputs(h.maxLimit)
+	inputs, errs := userReq.ValidateAndNormalizeInputs(0)
 	if len(errs) > 0 {
 		h.writeJSONResponse(rw, errs, http.StatusBadRequest)
 		return
 	}
 
-	if _, err := h.statsRepo.Incr(
-		inputs.NumberA(),
-		inputs.NumberB(),
-		inputs.WordA(),
-		inputs.WordB(),
-	); err != nil {
-		log.Printf("cannot incr. stats: %s", err)
-		// pass
-		// we do not block the response,
-		// stats are not essential for this app.
-	}
-
-	// Call interactor
-	numbers, err := h.numbersGenerator.Call(
-		inputs.Limit(),
+	statsValue, err := h.statsRepo.Fetch(
 		inputs.NumberA(),
 		inputs.NumberB(),
 		inputs.WordA(),
@@ -63,12 +43,25 @@ func (h *basicHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	)
 
 	if err != nil {
-		log.Printf("cannot compute fizzbuzz numbers: %s", err)
+		log.Printf("cannot fetch stats: %s", err)
 		h.writeJSONResponse(rw, err, http.StatusBadRequest)
 	}
 
-	// Send response
-	h.writeJSONResponse(rw, numbers, http.StatusOK)
+	data := struct {
+		NumberA int    `json:"number_a"`
+		NumberB int    `json:"number_b"`
+		WordA   string `json:"word_a"`
+		WordB   string `json:"word_b"`
+		Stats   int    `json:"stats"`
+	}{
+		Stats:   statsValue,
+		NumberA: inputs.NumberA(),
+		NumberB: inputs.NumberB(),
+		WordA:   inputs.WordA(),
+		WordB:   inputs.WordB(),
+	}
+
+	h.writeJSONResponse(rw, data, http.StatusOK)
 }
 
 func (h *basicHandler) writeJSONResponse(rw http.ResponseWriter, data any, httpCode int) {

@@ -1,4 +1,4 @@
-package listnumbershandler
+package entities
 
 import (
 	"encoding/json"

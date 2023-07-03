@@ -65,9 +65,12 @@ func TestBasicHandler(t *testing.T) {
 
 		runTest(t, payload, expected, 200)
 	})
+
 }
 
 func runTest(t *testing.T, payload string, expected map[int]interface{}, expectedSize int) {
+	fakeStatsRepo := &fakeStatsRepo{called: false}
+
 	basicNumberBuilder := fizzbuzz.NewBasicNumberBuilder()
 	basicNumbersGenerator := fizzbuzz.NewBasicNumberdGenerator(basicNumberBuilder, 200)
 
@@ -77,7 +80,7 @@ func runTest(t *testing.T, payload string, expected map[int]interface{}, expecte
 	}
 
 	rr := httptest.NewRecorder()
-	NewBasic(basicNumbersGenerator).ServeHTTP(rr, req)
+	NewBasic(basicNumbersGenerator, fakeStatsRepo).ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf(
@@ -105,4 +108,24 @@ func runTest(t *testing.T, payload string, expected map[int]interface{}, expecte
 			t.Errorf("unexpected values, %d, want %+v, got %+v", k, v, got)
 		}
 	}
+
+	if fakeStatsRepo.called == false {
+		t.Errorf("fakeStatsRepo.Incr never called")
+	}
+
+}
+
+type (
+	fakeStatsRepo struct {
+		called bool
+	}
+)
+
+func (r *fakeStatsRepo) Incr(nb, nc int, wa, wb string) (int, error) {
+	r.called = true
+	return 1, nil
+}
+
+func (r *fakeStatsRepo) Fetch(nb, nc int, wa, wb string) (int, error) {
+	return 0, nil
 }
