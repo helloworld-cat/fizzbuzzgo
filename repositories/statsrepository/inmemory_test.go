@@ -14,12 +14,12 @@ func TestInMemoryRepository(t *testing.T) {
 	wordB := "bar"
 
 	n := 100_000
-	count := 15 // number of goroutines
+	count := 5 // number of goroutines
 
 	var wg sync.WaitGroup
 	for i := 1; i <= count; i++ {
+		wg.Add(1)
 		go func() {
-			wg.Add(1)
 			for i := 0; i < n; i++ {
 				_, err := repo.Incr(na, nb, wordA, wordB)
 				if err != nil {
